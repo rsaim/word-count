@@ -10,17 +10,20 @@ from collections import Counter
 from bs4 import BeautifulSoup
 
 app = Flask(__name__)
+
+# $ heroku config:set APP_SETTINGS=config.StagingConfig --remote stage
+# $ heroku config:set APP_SETTINGS=config.ProductionConfig --remote pro
 APP_SETTINGS = os.environ.get('APP_SETTINGS', None)
 if APP_SETTINGS:
     app.config.from_object(APP_SETTINGS)
     print("APP_CONFIG={}".format(APP_SETTINGS))
 else:
     print("No APP_CONFIG set in environment.")
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
 db = SQLAlchemy(app)
 
 
-from models import Result
 from nltk.tokenize import word_tokenize
 
 
@@ -58,6 +61,7 @@ def index():
                 reverse=True
             )[:30]
             try:
+                from models import Result
                 result = Result(
                     url=url,
                     result_all=raw_word_count,
