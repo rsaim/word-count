@@ -20,7 +20,7 @@ if APP_SETTINGS:
 else:
     print("No APP_CONFIG set in environment.")
 
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
 
@@ -72,6 +72,11 @@ def index():
             except:
                 errors.append("Unable to add item to database.")
     return render_template('index.html', errors=errors, results=results)
+
+
+@app.route('/<name>')
+def hello_name(name):
+    return "Hello {}!".format(name)
 
 
 if __name__ == '__main__':
