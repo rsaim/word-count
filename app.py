@@ -1,9 +1,10 @@
+#!/usr/bin/env python
 import os
 import requests
 import operator
 import re
 import nltk
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, make_response
 from flask.ext.sqlalchemy import SQLAlchemy
 from stop_words import stops
 from collections import Counter
@@ -34,12 +35,16 @@ q = Queue(connection=conn)
 
 def count_and_save_words(url):
     errors = []
-    try:
-        r = requests.get(url)
-    except Exception as err:
-        errors.append(f"Unable to get URL. Please make sure it's "
-                      f"valid and try again: {err}")
-        return {"errors": errors}
+    # try:
+    # import ipdb; ipdb.set_trace()
+    if not url.startswith("http"):
+        url = 'http://' + url
+    print("Counting words from {!r}".format(url))
+    r = requests.get(url)
+    # except Exception as err:
+    #     errors.append(f"Unable to get URL. Please make sure it's "
+    #                   f"valid and try again: {err}")
+    #     return {"errors": errors}
 
     # text processing
     raw = BeautifulSoup(r.text, 'html.parser').get_text()
@@ -56,44 +61,52 @@ def count_and_save_words(url):
     no_stop_words = [w for w in raw_words if w.lower() not in stops]
     no_stop_words_count = Counter(no_stop_words)
 
-    try:
-        # save the results
-        from models import Result
-        result = Result(
-            url=url,
-            result_all=raw_word_count,
-            result_no_stop_words=no_stop_words_count
-        )
-        db.session.add(result)
-        db.session.commit()
-        print(f"{url} processed; id={result.id}")
-        return result.id
-    except Exception as err:
-        print(f"Error while parsing {url}: {err}")
-        errors.append("Unable to add item to database: {!r}".format(err))
-        return {"errors": errors}
+    # try:
+    # save the results
+    from models import Result
+    result = Result(
+        url=url,
+        result_all=raw_word_count,
+        result_no_stop_words=no_stop_words_count
+    )
+    db.session.add(result)
+    db.session.commit()
+    print(f"{url} processed; id={result.id}")
+    return result.id
+    # except Exception as err:
+    #     print(f"Error while parsing {url}: {err}")
+    #     errors.append("Unable to add item to database: {!r}".format(err))
+    #     return {"errors": errors}
 
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
+    return render_template('index.html')
+
+
+@app.route('/start', methods=['POST'])
+def get_counts():
+    print("/start endpoint")
     errors = []
-    results = {}
-    if request.method == "POST":
-        # get url that the person has entered
-        try:
-            url = request.form['url']
-        except:
-            errors.append(
-                "Unable to get URL. Please make sure it's valid and try again."
-            )
-            return render_template('index.html', errors=errors)
-        # if 'http://' not in url[:7]:
-        #     url = 'http://' + url
-        job = q.enqueue_call(func=count_and_save_words,
-                             args=(url,),
-                             result_ttl=5000)
-        print(job.id)
-    return render_template('index.html', errors=errors, results=results)
+    # get url that the person has entered
+    # try:
+        # # This works when the params are encoded in url
+        # (Content-Type: application/x-www-form-urlencoded)
+        # # url = request.form['url']
+        # Following works wtih Content-Type:'multipart / form - data'
+    url = request.get_json()["url"]
+    # except Exception as err:
+    #     print("returning 404")
+    #     errors.append(
+    #         "Unable to get URL. Please make sure it's valid and try again."
+    #         ": {!r}".format(err)
+    #     )
+    #     return make_response(render_template('index.html', errors=errors), 404)
+    job = q.enqueue_call(func=count_and_save_words,
+                         args=(url,),
+                         result_ttl=5000)
+    print(job.id)
+    return job.get_id()
 
 
 @app.route("/results/<job_key>", methods=["GET"])
