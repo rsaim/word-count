@@ -5,7 +5,7 @@ import operator
 import re
 import nltk
 from flask import Flask, render_template, request, jsonify, make_response
-from flask.ext.sqlalchemy import SQLAlchemy
+from flask_sqlalchemy import SQLAlchemy
 from stop_words import stops
 from collections import Counter
 from bs4 import BeautifulSoup
@@ -121,7 +121,6 @@ def get_results(job_key):
         return jsonify(results)
     else:
         return "Nay!", 202
-
 
 @app.route('/<name>')
 def hello_name(name):
