@@ -4,6 +4,7 @@
 <head>
   <title>Wordcount</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" type="text/css" href="../static/main.css">
   <link href="https://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css" rel="stylesheet" media="screen">
   <style>
     .container {
@@ -33,6 +34,8 @@
         {% endfor %}
         <br>
       </div>
+    </div>
+    <div class="row">
       <div class="col-sm-5 col-sm-offset-1">
         <h2>Frequencies</h2>
         <br>
@@ -56,19 +59,24 @@
             </tbody>
           </table>
         </div>
-          <img class="col-sm-3 col-sm-offset-4" src="{{ url_for('static', filename='spinner.gif') }}" ng-show="loading">
+        <img class="col-sm-3 col-sm-offset-4" src="{{ url_for('static', filename='spinner.gif') }}" ng-show="loading">
         <div class="alert alert-danger" role="alert" ng-show='urlError'>
-            <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
-            <span class="sr-only">Error:</span>
-            <span>There was an error submitting your URL.<br>
+          <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+          <span class="sr-only">Error:</span>
+          <span>There was an error submitting your URL.<br>
             Please check to make sure it is valid before trying again.</span>
         </div>
       </div>
+      <div class="col-sm-5 col-sm-offset-1">
+        <h2>Frequencies Chart</h2>
+        <word-count-chart data="wordcounts"></word-count-chart>
+      </div>
     </div>
+    <br>
   </div>
   <br><br>
+  <script src="//d3js.org/d3.v3.min.js" charset="utf-8"></script>
   <script src="https://code.jquery.com/jquery-1.11.0.min.js"></script>
-  <!--<script src="https://netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>-->
   <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.9/angular.min.js"></script>
   <script src="{{ url_for('static', filename='main.js') }}"></script>
 </body>

@@ -34,6 +34,13 @@ q = Queue(connection=conn)
 
 
 def count_and_save_words(url):
+    print("count_and_save_words url={}".format(url))
+    from models import Result
+    id_from_db = Result.query.filter_by(url=url).first()
+    if id_from_db:
+        # import ipdb; ipdb.set_trace()
+        print("Returning already computed results with id={} from DB".format(id_from_db.id))
+        return id_from_db.id
     errors = []
     try:
         if not url.startswith("http"):
@@ -62,7 +69,6 @@ def count_and_save_words(url):
 
     try:
         # save the results
-        from models import Result
         result = Result(
             url=url,
             result_all=raw_word_count,
@@ -95,7 +101,7 @@ def get_counts():
     job = q.enqueue_call(func=count_and_save_words,
                          args=(url,),
                          result_ttl=5000)
-    print(job.id)
+    print("Submitted job with {}".format(job.id))
     return job.get_id()
 
 
