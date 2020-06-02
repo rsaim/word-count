@@ -4,7 +4,13 @@
     angular.module('WordcountApp', [])
 
         .controller('WordcountController', ['$scope', '$log', '$http', '$timeout',
+
             function ($scope, $log, $http, $timeout) {
+
+                $scope.submitButtonText = "Submit";
+                $scope.loading = false;
+                $scope.urlError = false;
+                $log.log($scope.urlError);
 
                 $scope.getResults = function () {
 
@@ -15,9 +21,13 @@
                     // Start the API request.
                     $http.post('/start', {'url': url_input}).
                     success(function (results) {
+                        $scope.urlError = false;
                         $log.log("SUCCESS submitted request. ID: " + results);
                         $log.log("Starting polling");
                         getWordCount(results);
+                        $scope.wordcounts = null;
+                        $scope.loading = true;
+                        $scope.submitButtonText = "Loading...";
                     }).error(function (error) {
                         $log.log("ERROR: " + error);
                     })
@@ -37,6 +47,8 @@
                                 } else if (status === 200) {
                                     $log.log(data);
                                     $scope.wordcounts = data;
+                                    $scope.loading = false;
+                                    $scope.submitButtonText = "Submit";
                                     $timeout.cancel(timeout);
                                     return false;
                                 }
@@ -44,7 +56,10 @@
                                 timeout = $timeout(poller, 2000);
                             }).
                         error(function (error) {
-                            $log.log("ERROR: " + error)
+                            $log.log("ERROR: " + error);
+                            $scope.loading = false;
+                            $scope.submitButtonText = "Submit";
+                            $scope.urlError = true;
                         });
                     };
                     poller();

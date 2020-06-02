@@ -35,16 +35,15 @@ q = Queue(connection=conn)
 
 def count_and_save_words(url):
     errors = []
-    # try:
-    # import ipdb; ipdb.set_trace()
-    if not url.startswith("http"):
-        url = 'http://' + url
-    print("Counting words from {!r}".format(url))
-    r = requests.get(url)
-    # except Exception as err:
-    #     errors.append(f"Unable to get URL. Please make sure it's "
-    #                   f"valid and try again: {err}")
-    #     return {"errors": errors}
+    try:
+        if not url.startswith("http"):
+            url = 'http://' + url
+        print("Counting words from {!r}".format(url))
+        r = requests.get(url)
+    except Exception as err:
+        errors.append(f"Unable to get URL. Please make sure it's "
+                      f"valid and try again: {err}")
+        return {"errors": errors}
 
     # text processing
     raw = BeautifulSoup(r.text, 'html.parser').get_text()
@@ -61,22 +60,22 @@ def count_and_save_words(url):
     no_stop_words = [w for w in raw_words if w.lower() not in stops]
     no_stop_words_count = Counter(no_stop_words)
 
-    # try:
-    # save the results
-    from models import Result
-    result = Result(
-        url=url,
-        result_all=raw_word_count,
-        result_no_stop_words=no_stop_words_count
-    )
-    db.session.add(result)
-    db.session.commit()
-    print(f"{url} processed; id={result.id}")
-    return result.id
-    # except Exception as err:
-    #     print(f"Error while parsing {url}: {err}")
-    #     errors.append("Unable to add item to database: {!r}".format(err))
-    #     return {"errors": errors}
+    try:
+        # save the results
+        from models import Result
+        result = Result(
+            url=url,
+            result_all=raw_word_count,
+            result_no_stop_words=no_stop_words_count
+        )
+        db.session.add(result)
+        db.session.commit()
+        print(f"{url} processed; id={result.id}")
+        return result.id
+    except Exception as err:
+        print(f"Error while parsing {url}: {err}")
+        errors.append("Unable to add item to database: {!r}".format(err))
+        return {"errors": errors}
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -89,19 +88,10 @@ def get_counts():
     print("/start endpoint")
     errors = []
     # get url that the person has entered
-    # try:
-        # # This works when the params are encoded in url
-        # (Content-Type: application/x-www-form-urlencoded)
-        # # url = request.form['url']
-        # Following works wtih Content-Type:'multipart / form - data'
+    # This works when the params are encoded in url (Content-Type: application/x-www-form-urlencoded)
+    # url = request.form['url']
+    # Following works wtih Content-Type:'multipart / form - data'
     url = request.get_json()["url"]
-    # except Exception as err:
-    #     print("returning 404")
-    #     errors.append(
-    #         "Unable to get URL. Please make sure it's valid and try again."
-    #         ": {!r}".format(err)
-    #     )
-    #     return make_response(render_template('index.html', errors=errors), 404)
     job = q.enqueue_call(func=count_and_save_words,
                          args=(url,),
                          result_ttl=5000)
@@ -111,7 +101,9 @@ def get_counts():
 
 @app.route("/results/<job_key>", methods=["GET"])
 def get_results(job_key):
+
     job = Job.fetch(job_key, connection=conn)
+
     if job.is_finished:
         from models import Result
         result = Result.query.filter_by(id=job.result).first()
