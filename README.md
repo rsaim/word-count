@@ -1,9 +1,6 @@
-https://realpython.com/flask-by-example-part-1-project-setup/
-
-
 Local setup:
 
-1. Step into flask-by-example dir. This will export appropriate env via the .env file (autoenv).
+1. Step into word-count dir. This will export appropriate env via the .env file (autoenv).
 1. Start redis-server in a new terminal. Consider making the server a daemon.
 1. Install postgres server (already done on my Mac). Use Postico to connect 
    to the local instance. You could even connect to the remote posgres DB
